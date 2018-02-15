@@ -22,7 +22,7 @@ using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.SignalR
 {
-    public class HubEndPoint<THub> : IInvocationBinder where THub : Hub
+    public class HubEndPoint<THub> : IInvocationBinder, IHubEndPoint where THub : Hub
     {
         private readonly Dictionary<string, HubMethodDescriptor> _methods = new Dictionary<string, HubMethodDescriptor>(StringComparer.OrdinalIgnoreCase);
 
