@@ -45,8 +45,9 @@ namespace Microsoft.AspNetCore.Sockets.Client
         private PipeReader Input => _transportChannel.Input;
         private PipeWriter Output => _transportChannel.Output;
         private readonly List<ReceiveCallback> _callbacks = new List<ReceiveCallback>();
-        private TransportType _requestedTransportType = TransportType.All;
+        private readonly TransportType _requestedTransportType = TransportType.All;
         private TransportType _serverTransports = TransportType.All;
+        private readonly TransportType[] _allTransports = new[]{ TransportType.WebSockets, TransportType.ServerSentEvents, TransportType.LongPolling };
         private readonly ConnectionLogScope _logScope;
         private readonly IDisposable _scopeDisposable;
 
@@ -166,30 +167,24 @@ namespace Microsoft.AspNetCore.Sockets.Client
                         return;
                     }
                     _serverTransports = GetAvailableServerTransports(negotiationResponse);
-                    _transport = _transportFactory.CreateTransport(_serverTransports);
                     connectUrl = CreateConnectUrl(Url, negotiationResponse);
                 }
 
                 _logger.StartingTransport(_transport, connectUrl);
-                var validTransports = _requestedTransportType & _serverTransports;
-                while (validTransports > 0)
+                foreach (var transport in _allTransports)
                 {
                     try
                     {
-                        await StartTransport(connectUrl);
+                        if ((transport & _serverTransports) != 0)
+                        {
+                            await StartTransport(connectUrl, transport);
+                            break;
+                        }
                     }
                     catch (Exception ex)
                     {
-                        // Removing the recently failed transport type from valid transports
-                        validTransports = validTransports & ~(_transport.TransportType);
-                        if (validTransports > 0)
-                        {
-                            _transport = _transportFactory.CreateTransport(validTransports);
-                        }
-                        else
-                        {
-                            throw ex;
-                        }
+                        // Try the next transport
+                        _logger.TransportFailedToStart(ex);
                     }
                 }
             }
@@ -344,11 +339,13 @@ namespace Microsoft.AspNetCore.Sockets.Client
             return Utils.AppendQueryString(url, "id=" + negotiationResponse.ConnectionId);
         }
 
-        private async Task StartTransport(Uri connectUrl)
+        private async Task StartTransport(Uri connectUrl, TransportType transportType)
         {
+
             var options = new PipeOptions(readerScheduler: PipeScheduler.ThreadPool);
             var pair = DuplexPipe.CreateConnectionPair(options, options);
             _transportChannel = pair.Transport;
+            _transport = _transportFactory.CreateTransport(transportType);
 
             // Start the transport, giving it one end of the pipeline
             try

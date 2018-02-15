@@ -30,8 +30,6 @@ namespace Microsoft.AspNetCore.Sockets.Client
 
         public TransferMode? Mode { get; private set; }
 
-        public TransportType TransportType => TransportType.ServerSentEvents;
-
         public ServerSentEventsTransport(HttpClient httpClient)
             : this(httpClient, null, null)
         { }

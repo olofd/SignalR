@@ -25,8 +25,6 @@ namespace Microsoft.AspNetCore.Sockets.Client
 
         public TransferMode? Mode { get; private set; }
 
-        public TransportType TransportType => TransportType.WebSockets;
-
         public WebSocketsTransport()
             : this(null, null)
         {

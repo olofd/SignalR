@@ -30,8 +30,6 @@ namespace Microsoft.AspNetCore.Sockets.Client
 
         public TransferMode? Mode { get; private set; }
 
-        public TransportType TransportType => TransportType.LongPolling;
-
         public LongPollingTransport(HttpClient httpClient)
             : this(httpClient, null, null)
         { }

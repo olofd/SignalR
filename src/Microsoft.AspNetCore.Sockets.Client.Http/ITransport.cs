@@ -12,6 +12,5 @@ namespace Microsoft.AspNetCore.Sockets.Client
         Task StartAsync(Uri url, IDuplexPipe application, TransferMode requestedTransferMode, IConnection connection);
         Task StopAsync();
         TransferMode? Mode { get; }
-        TransportType TransportType { get; }
     }
 }
