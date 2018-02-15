@@ -45,7 +45,8 @@ namespace Microsoft.AspNetCore.Sockets.Client
         private PipeReader Input => _transportChannel.Input;
         private PipeWriter Output => _transportChannel.Output;
         private readonly List<ReceiveCallback> _callbacks = new List<ReceiveCallback>();
-        private readonly TransportType _requestedTransportType = TransportType.All;
+        private TransportType _requestedTransportType = TransportType.All;
+        private TransportType _serverTransports = TransportType.All;
         private readonly ConnectionLogScope _logScope;
         private readonly IDisposable _scopeDisposable;
 
@@ -164,13 +165,33 @@ namespace Microsoft.AspNetCore.Sockets.Client
                         _logger.HttpConnectionClosed();
                         return;
                     }
-
-                    _transport = _transportFactory.CreateTransport(GetAvailableServerTransports(negotiationResponse));
+                    _serverTransports = GetAvailableServerTransports(negotiationResponse);
+                    _transport = _transportFactory.CreateTransport(_serverTransports);
                     connectUrl = CreateConnectUrl(Url, negotiationResponse);
                 }
 
                 _logger.StartingTransport(_transport, connectUrl);
-                await StartTransport(connectUrl);
+                var validTransports = _requestedTransportType & _serverTransports;
+                while (validTransports > 0)
+                {
+                    try
+                    {
+                        await StartTransport(connectUrl);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Removing the recently failed transport type from valid transports
+                        validTransports = validTransports & ~(_transport.TransportType);
+                        if (validTransports > 0)
+                        {
+                            _transport = _transportFactory.CreateTransport(validTransports);
+                        }
+                        else
+                        {
+                            throw ex;
+                        }
+                    }
+                }
             }
             catch
             {

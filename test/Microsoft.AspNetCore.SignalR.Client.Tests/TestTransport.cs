@@ -15,6 +15,8 @@ namespace Microsoft.AspNetCore.SignalR.Client.Tests
         public TransferMode? Mode { get; }
         public IDuplexPipe Application { get; private set; }
 
+        public TransportType TransportType => TransportType.All;
+
         public TestTransport(Func<Task> onTransportStop = null, Func<Task> onTransportStart = null, TransferMode transferMode = TransferMode.Text)
         {
             _stopHandler = onTransportStop ?? new Func<Task>(() => Task.CompletedTask);
