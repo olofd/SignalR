@@ -172,7 +172,7 @@ namespace Microsoft.AspNetCore.Sockets.Client.Internal
             LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(26, nameof(ConnectionStateChanged)), "Connection state changed from {previousState} to {newState}.");
 
         private static readonly Action<ILogger, Exception> _transportFailedToStart =
-            LoggerMessage.Define(LogLevel.Debug, new EventId(26, nameof(TransportFailedToStart)), "The {transportType} transport failed to start");
+            LoggerMessage.Define(LogLevel.Debug, new EventId(26, nameof(TransportFailedToStart)), "The transport failed to start");
 
         public static void StartTransport(this ILogger logger, TransferMode transferMode)
         {

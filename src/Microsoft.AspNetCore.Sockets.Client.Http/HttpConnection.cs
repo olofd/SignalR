@@ -170,7 +170,6 @@ namespace Microsoft.AspNetCore.Sockets.Client
                     connectUrl = CreateConnectUrl(Url, negotiationResponse);
                 }
 
-                _logger.StartingTransport(_transport, connectUrl);
                 foreach (var transport in _allTransports)
                 {
                     try
@@ -178,6 +177,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
                         if ((transport & _serverTransports) != 0)
                         {
                             await StartTransport(connectUrl, transport);
+                            _logger.StartingTransport(_transport, connectUrl);
                             break;
                         }
                     }
@@ -187,7 +187,12 @@ namespace Microsoft.AspNetCore.Sockets.Client
                         _logger.TransportFailedToStart(ex);
                     }
                 }
+                if (_transport == null)
+                {
+                    throw new InvalidOperationException("No transport was created.");
+                }
             }
+
             catch
             {
                 // The connection can now be either in the Connecting or Disposed state - only change the state to

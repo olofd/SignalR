@@ -109,8 +109,9 @@ namespace Microsoft.AspNetCore.SignalR.Client.Tests
             }
 
             [Fact]
-            public async Task CanStartConnectionThatFailedToStart()
+            public async Task TransportThatFailsToStartFallsBack()
             {
+                //while (!System.Diagnostics.Debugger.IsAttached) { }
                 using (StartLog(out var loggerFactory))
                 {
                     var expected = new Exception("Transport failed to start");
@@ -136,13 +137,10 @@ namespace Microsoft.AspNetCore.SignalR.Client.Tests
                             transport: new TestTransport(onTransportStart: OnTransportStart)),
                         async (connection, closed) =>
                     {
-                        var actual = await Assert.ThrowsAsync<Exception>(() => connection.StartAsync());
-                        Assert.Same(expected, actual);
+                        Assert.True(shouldFail);
+                        await connection.StartAsync();
+                        Assert.False(shouldFail);
 
-                        // Should succeed this time
-                        shouldFail = false;
-
-                        await connection.StartAsync().OrTimeout();
                     });
                 }
             }
