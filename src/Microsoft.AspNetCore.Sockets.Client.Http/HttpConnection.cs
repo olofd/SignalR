@@ -47,7 +47,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
         private readonly List<ReceiveCallback> _callbacks = new List<ReceiveCallback>();
         private readonly TransportType _requestedTransportType = TransportType.All;
         private TransportType _serverTransports = TransportType.All;
-        private readonly TransportType[] _allTransports = new[]{ TransportType.WebSockets, TransportType.ServerSentEvents, TransportType.LongPolling };
+        private static readonly TransportType[] AllTransports = new[]{ TransportType.WebSockets, TransportType.ServerSentEvents, TransportType.LongPolling };
         private readonly ConnectionLogScope _logScope;
         private readonly IDisposable _scopeDisposable;
 
@@ -150,11 +150,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
             try
             {
                 var connectUrl = Url;
-                if (_requestedTransportType == TransportType.WebSockets)
-                {
-                    _transport = _transportFactory.CreateTransport(TransportType.WebSockets);
-                }
-                else
+                if (_requestedTransportType != TransportType.WebSockets)
                 {
                     var negotiationResponse = await Negotiate(Url, _httpClient, _logger);
                     _connectionId = negotiationResponse.ConnectionId;
@@ -170,11 +166,11 @@ namespace Microsoft.AspNetCore.Sockets.Client
                     connectUrl = CreateConnectUrl(Url, negotiationResponse);
                 }
 
-                foreach (var transport in _allTransports)
+                foreach (var transport in AllTransports)
                 {
                     try
                     {
-                        if ((transport & _serverTransports) != 0)
+                        if ((transport & _serverTransports & _requestedTransportType) != 0)
                         {
                             await StartTransport(connectUrl, transport);
                             _logger.StartingTransport(_transport, connectUrl);
@@ -184,7 +180,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
                     catch (Exception ex)
                     {
                         // Try the next transport
-                        _logger.TransportFailedToStart(ex);
+                        _logger.TransportFailedToStart(nameof(transport), ex);
                     }
                 }
                 if (_transport == null)

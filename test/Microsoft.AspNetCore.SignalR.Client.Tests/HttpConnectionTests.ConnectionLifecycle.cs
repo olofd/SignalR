@@ -114,11 +114,13 @@ namespace Microsoft.AspNetCore.SignalR.Client.Tests
                 //while (!System.Diagnostics.Debugger.IsAttached) { }
                 using (StartLog(out var loggerFactory))
                 {
+                    var startCounter = 0;
                     var expected = new Exception("Transport failed to start");
                     var shouldFail = true;
 
                     Task OnTransportStart()
                     {
+                        startCounter++;
                         if (shouldFail)
                         {
                             // Succeed next time
@@ -140,7 +142,7 @@ namespace Microsoft.AspNetCore.SignalR.Client.Tests
                         Assert.True(shouldFail);
                         await connection.StartAsync();
                         Assert.False(shouldFail);
-
+                        Assert.Equal(startCounter, 2);
                     });
                 }
             }

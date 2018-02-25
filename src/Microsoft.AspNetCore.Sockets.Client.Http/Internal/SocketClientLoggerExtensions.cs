@@ -171,8 +171,8 @@ namespace Microsoft.AspNetCore.Sockets.Client.Internal
         private static readonly Action<ILogger, string, string, Exception> _connectionStateChanged =
             LoggerMessage.Define<string, string>(LogLevel.Debug, new EventId(26, nameof(ConnectionStateChanged)), "Connection state changed from {previousState} to {newState}.");
 
-        private static readonly Action<ILogger, Exception> _transportFailedToStart =
-            LoggerMessage.Define(LogLevel.Debug, new EventId(26, nameof(TransportFailedToStart)), "The transport failed to start");
+        private static readonly Action<ILogger, string, Exception> _transportFailedToStart =
+            LoggerMessage.Define<string>(LogLevel.Warning, new EventId(27, nameof(TransportFailedToStart)), "The {transportName} transport failed to start");
 
         public static void StartTransport(this ILogger logger, TransferMode transferMode)
         {
@@ -184,9 +184,9 @@ namespace Microsoft.AspNetCore.Sockets.Client.Internal
             _transportStopped(logger, exception);
         }
 
-        public static void TransportFailedToStart(this ILogger logger, Exception ex)
+        public static void TransportFailedToStart(this ILogger logger, string transportName, Exception ex)
         {
-            _transportFailedToStart(logger, ex);
+            _transportFailedToStart(logger, transportName,ex);
         }
 
         public static void StartReceive(this ILogger logger)
