@@ -142,7 +142,7 @@ namespace Microsoft.AspNetCore.SignalR.Client.Tests
                         Assert.True(shouldFail);
                         await connection.StartAsync();
                         Assert.False(shouldFail);
-                        Assert.Equal(startCounter, 2);
+                        Assert.Equal(2, startCounter);
                     });
                 }
             }
