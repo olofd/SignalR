@@ -47,6 +47,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
         private readonly List<ReceiveCallback> _callbacks = new List<ReceiveCallback>();
         private readonly TransportType _requestedTransportType = TransportType.All;
         private TransportType _serverTransports = TransportType.All;
+        // The order of the transports here is the order determines the fallback order.
         private static readonly TransportType[] AllTransports = new[]{ TransportType.WebSockets, TransportType.ServerSentEvents, TransportType.LongPolling };
         private readonly ConnectionLogScope _logScope;
         private readonly IDisposable _scopeDisposable;

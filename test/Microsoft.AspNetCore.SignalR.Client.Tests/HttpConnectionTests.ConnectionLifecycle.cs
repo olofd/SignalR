@@ -111,7 +111,6 @@ namespace Microsoft.AspNetCore.SignalR.Client.Tests
             [Fact]
             public async Task TransportThatFailsToStartFallsBack()
             {
-                //while (!System.Diagnostics.Debugger.IsAttached) { }
                 using (StartLog(out var loggerFactory))
                 {
                     var startCounter = 0;
