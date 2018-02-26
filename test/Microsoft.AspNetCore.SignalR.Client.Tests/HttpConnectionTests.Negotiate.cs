@@ -26,7 +26,7 @@ namespace Microsoft.AspNetCore.SignalR.Client.Tests
             [Fact]
             public Task StartThrowsFormatExceptionIfNegotiationResponseHasNoConnectionId()
             {
-                return RunInvalidNegotiateResponseTest<FormatException>(ResponseUtils.CreateNegotiationContent(connectionId: null), "Invalid connection id returned in negotiation response.");
+                return RunInvalidNegotiateResponseTest<FormatException>(ResponseUtils.CreateNegotiationContent(connectionId: null), "Invalid connection id.");
             }
 
             [Fact]

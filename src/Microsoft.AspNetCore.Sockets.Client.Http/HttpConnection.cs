@@ -143,6 +143,14 @@ namespace Microsoft.AspNetCore.Sockets.Client
             return _startTcs.Task;
         }
 
+        private async Task<NegotiationResponse> GetNewNegotiationResponse()
+        {
+            var negotiationResponse = await Negotiate(Url, _httpClient, _logger);
+            _connectionId = negotiationResponse.ConnectionId;
+            _logScope.ConnectionId = _connectionId;
+            return negotiationResponse;
+        }
+
         private async Task StartAsyncInternal()
         {
             _logger.HttpConnectionStarting();
@@ -152,9 +160,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
                 var connectUrl = Url;
                 if (_requestedTransportType != TransportType.WebSockets)
                 {
-                    var negotiationResponse = await Negotiate(Url, _httpClient, _logger);
-                    _connectionId = negotiationResponse.ConnectionId;
-                    _logScope.ConnectionId = _connectionId;
+                    var negotiationResponse = await GetNewNegotiationResponse();
 
                     // Connection is being disposed while start was in progress
                     if (_connectionState == ConnectionState.Disposed)
@@ -162,16 +168,24 @@ namespace Microsoft.AspNetCore.Sockets.Client
                         _logger.HttpConnectionClosed();
                         return;
                     }
+
+                    // This should only need to happen once
                     _serverTransports = GetAvailableServerTransports(negotiationResponse);
-                    connectUrl = CreateConnectUrl(Url, negotiationResponse);
+                    connectUrl = CreateConnectUrl(Url, negotiationResponse.ConnectionId);
                 }
 
                 foreach (var transport in AllTransports)
                 {
+                    var createNewConnectionId = false;
                     try
                     {
                         if ((transport & _serverTransports & _requestedTransportType) != 0)
                         {
+                            if (createNewConnectionId)
+                            {
+                                var newNegotiationResponse = await GetNewNegotiationResponse();
+                                connectUrl = CreateConnectUrl(Url, newNegotiationResponse.ConnectionId);
+                            }
                             await StartTransport(connectUrl, transport);
                             _logger.StartingTransport(_transport, connectUrl);
                             break;
@@ -181,6 +195,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
                     {
                         // Try the next transport
                         _logger.TransportFailedToStart(nameof(transport), ex);
+                        createNewConnectionId = true;
                     }
                 }
                 if (_transport == null)
@@ -330,14 +345,14 @@ namespace Microsoft.AspNetCore.Sockets.Client
             return availableServerTransports;
         }
 
-        private static Uri CreateConnectUrl(Uri url, NegotiationResponse negotiationResponse)
+        private static Uri CreateConnectUrl(Uri url, string connectionId)
         {
-            if (string.IsNullOrWhiteSpace(negotiationResponse.ConnectionId))
+            if (string.IsNullOrWhiteSpace(connectionId))
             {
-                throw new FormatException("Invalid connection id returned in negotiation response.");
+                throw new FormatException("Invalid connection id.");
             }
 
-            return Utils.AppendQueryString(url, "id=" + negotiationResponse.ConnectionId);
+            return Utils.AppendQueryString(url, "id=" + connectionId);
         }
 
         private async Task StartTransport(Uri connectUrl, TransportType transportType)
