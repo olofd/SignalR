@@ -37,7 +37,7 @@ namespace Microsoft.AspNetCore.SignalR.Internal
         {
             protocolName = protocolName ?? throw new ArgumentNullException(nameof(protocolName));
 
-            if (_availableProtocols.TryGetValue(protocolName, out var protocol))
+            if (_availableProtocols.TryGetValue(protocolName, out var protocol) && _options.Value.SupportedProtocols.Contains(protocolName))
             {
                 Log.FoundImplementationForProtocol(_logger, protocolName);
                 return protocol;
