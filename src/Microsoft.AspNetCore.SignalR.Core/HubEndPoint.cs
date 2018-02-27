@@ -17,13 +17,13 @@ namespace Microsoft.AspNetCore.SignalR
         private readonly ILoggerFactory _loggerFactory;
         private readonly ILogger<HubEndPoint<THub>> _logger;
         private readonly IHubProtocolResolver _protocolResolver;
-        private readonly HubOptions _hubOptions;
+        private readonly HubOptions<THub> _hubOptions;
         private readonly IUserIdProvider _userIdProvider;
         private readonly HubDispatcher<THub> _dispatcher;
 
         public HubEndPoint(HubLifetimeManager<THub> lifetimeManager,
                            IHubProtocolResolver protocolResolver,
-                           IOptions<HubOptions> hubOptions,
+                           IOptions<HubOptions<THub>> hubOptions,
                            ILoggerFactory loggerFactory,
                            IUserIdProvider userIdProvider,
                            HubDispatcher<THub> dispatcher)
@@ -41,7 +41,7 @@ namespace Microsoft.AspNetCore.SignalR
         {
             var connectionContext = new HubConnectionContext(connection, _hubOptions.KeepAliveInterval, _loggerFactory);
 
-            if (!await connectionContext.NegotiateAsync(_hubOptions.NegotiateTimeout, _protocolResolver, _userIdProvider))
+            if (!await connectionContext.NegotiateAsync(_hubOptions.NegotiateTimeout, _hubOptions.SupportedProtocols, _protocolResolver, _userIdProvider))
             {
                 return;
             }

@@ -20,11 +20,25 @@ namespace SocketsSample
         {
             services.AddSockets();
 
-            services.AddSignalR(options =>
+            services.AddSignalR()
+
+            .AddHubOptions<Chat>(options =>
             {
-                // Faster pings for testing
                 options.KeepAliveInterval = TimeSpan.FromSeconds(5);
             })
+            .AddHubOptions<DynamicChat>(options =>
+            {
+                options.KeepAliveInterval = TimeSpan.FromSeconds(5);
+            })
+            .AddHubOptions<HubTChat>(options =>
+            {
+                options.KeepAliveInterval = TimeSpan.FromSeconds(5);
+            })
+            .AddHubOptions<Streaming>(options =>
+            {
+                options.KeepAliveInterval = TimeSpan.FromSeconds(5);
+            })
+
             .AddMessagePackProtocol(options =>
             {
                 options.SerializationContext.DictionarySerlaizationOptions.KeyTransformer = DictionaryKeyTransformers.LowerCamel;

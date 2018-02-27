@@ -10,15 +10,15 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static ISignalRBuilder AddSignalR(this IServiceCollection services)
         {
-            return AddSignalR(services, _ => { });
-        }
-
-        public static ISignalRBuilder AddSignalR(this IServiceCollection services, Action<HubOptions> configure)
-        {
-            services.Configure(configure);
             services.AddSockets();
             return services.AddSignalRCore()
                 .AddJsonProtocol();
+        }
+
+        public static ISignalRBuilder AddHubOptions<THub>(this ISignalRBuilder signalrBuilder, Action<HubOptions<THub>> options) where THub : Hub
+        {
+            signalrBuilder.Services.Configure(options);
+            return signalrBuilder;
         }
     }
 }
