@@ -159,7 +159,12 @@ namespace Microsoft.AspNetCore.Sockets.Client
             try
             {
                 var connectUrl = Url;
-                if (_requestedTransportType != TransportType.WebSockets)
+                if (_requestedTransportType == TransportType.WebSockets)
+                {
+                    await StartTransport(connectUrl, _requestedTransportType);
+                    _logger.StartingTransport(_transport, connectUrl);
+                }
+                else
                 {
                     var negotiationResponse = await GetNewNegotiationResponse();
 
@@ -173,32 +178,34 @@ namespace Microsoft.AspNetCore.Sockets.Client
                     // This should only need to happen once
                     _serverTransports = GetAvailableServerTransports(negotiationResponse);
                     connectUrl = CreateConnectUrl(Url, negotiationResponse.ConnectionId);
-                }
 
-                foreach (var transport in AllTransports)
-                {
-                    var createNewConnectionId = false;
-                    try
+                    foreach (var transport in AllTransports)
                     {
-                        if ((transport & _serverTransports & _requestedTransportType) != 0)
+                        try
                         {
-                            if (createNewConnectionId)
+                            if ((transport & _serverTransports & _requestedTransportType) != 0)
                             {
-                                var newNegotiationResponse = await GetNewNegotiationResponse();
-                                connectUrl = CreateConnectUrl(Url, newNegotiationResponse.ConnectionId);
+                                // The negotiation response gets cleared in the fallback scenario.
+                                if (negotiationResponse == null)
+                                {
+                                    negotiationResponse = await GetNewNegotiationResponse();
+                                    connectUrl = CreateConnectUrl(Url, negotiationResponse.ConnectionId);
+                                }
+
+                                await StartTransport(connectUrl, transport);
+                                _logger.StartingTransport(_transport, connectUrl);
+                                break;
                             }
-                            await StartTransport(connectUrl, transport);
-                            _logger.StartingTransport(_transport, connectUrl);
-                            break;
+                        }
+                        catch (Exception ex)
+                        {
+                            // Try the next transport
+                            _logger.TransportFailedToStart(nameof(transport), ex);
+                            negotiationResponse = null;
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        // Try the next transport
-                        _logger.TransportFailedToStart(nameof(transport), ex);
-                        createNewConnectionId = true;
-                    }
                 }
+                
                 if (_transport == null)
                 {
                     throw new InvalidOperationException("No transport was created.");
