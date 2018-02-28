@@ -108,22 +108,22 @@ namespace Microsoft.AspNetCore.SignalR.Client.Tests
                 }
             }
 
-            [Fact]
-            public async Task TransportThatFailsToStartFallsBack()
+            [Theory]
+            [InlineData(2)]
+            [InlineData(3)]
+            public async Task TransportThatFailsToStartOnceFallsBack(int passThreshold)
             {
                 using (StartLog(out var loggerFactory))
                 {
                     var startCounter = 0;
                     var expected = new Exception("Transport failed to start");
-                    var shouldFail = true;
 
                     Task OnTransportStart()
                     {
                         startCounter++;
-                        if (shouldFail)
+                        if (startCounter < passThreshold)
                         {
                             // Succeed next time
-                            shouldFail = false;
                             return Task.FromException(expected);
                         }
                         else
@@ -138,11 +138,36 @@ namespace Microsoft.AspNetCore.SignalR.Client.Tests
                             transport: new TestTransport(onTransportStart: OnTransportStart)),
                         async (connection, closed) =>
                     {
-                        Assert.True(shouldFail);
+                        Assert.Equal(0, startCounter);
                         await connection.StartAsync();
-                        Assert.False(shouldFail);
-                        Assert.Equal(2, startCounter);
+                        Assert.Equal(passThreshold, startCounter);
                     });
+                }
+            }
+
+            [Fact]
+            public async Task StartThrowsAfterAllTransportsFail()
+            {
+                using (StartLog(out var loggerFactory))
+                {
+                    var startCounter = 0;
+                    var expected = new Exception("Transport failed to start");
+                    Task OnTransportStart()
+                    {
+                        startCounter++;
+                        return Task.FromException(expected);
+                    }
+
+                    await WithConnectionAsync(
+                        CreateConnection(
+                            loggerFactory: loggerFactory,
+                            transport: new TestTransport(onTransportStart: OnTransportStart)),
+                        async (connection, closed) =>
+                        {
+                            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => connection.StartAsync());
+                            Assert.Equal("No transport was created.", ex.Message);
+                            Assert.Equal(3, startCounter);
+                        });
                 }
             }
 
@@ -213,9 +238,9 @@ namespace Microsoft.AspNetCore.SignalR.Client.Tests
                     var httpHandler = new TestHttpMessageHandler();
 
                     var longPollResult = new TaskCompletionSource<HttpResponseMessage>();
-                    httpHandler.OnLongPoll(cancellationToken => 
-                    { 
-                        cancellationToken.Register(() => 
+                    httpHandler.OnLongPoll(cancellationToken =>
+                    {
+                        cancellationToken.Register(() =>
                         {
                             longPollResult.TrySetResult(ResponseUtils.CreateResponse(HttpStatusCode.NoContent));
                         });

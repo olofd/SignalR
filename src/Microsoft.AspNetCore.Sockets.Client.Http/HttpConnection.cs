@@ -387,6 +387,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
             catch (Exception ex)
             {
                 _logger.ErrorStartingTransport(_transport, ex);
+                _transport = null;
                 throw;
             }
         }
