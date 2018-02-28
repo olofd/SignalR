@@ -6,6 +6,5 @@ namespace Microsoft.AspNetCore.SignalR
     public static class DefaultProtocols
     {
         public static readonly string JSONProtocol = "json";
-        public static readonly string MsgPackProtocol = "messagepack";
     }
 }

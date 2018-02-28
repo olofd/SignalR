@@ -20,6 +20,15 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSignalR()
+                .AddHubOptions<TestHub>(options => {
+                    options.SupportedProtocols.Add("messagepack");
+                })
+                .AddHubOptions<DynamicTestHub>(options => {
+                    options.SupportedProtocols.Add("messagepack");
+                })
+                .AddHubOptions<TestHubT>(options => {
+                    options.SupportedProtocols.Add("messagepack");
+                })
                 .AddMessagePackProtocol();
             services.AddAuthorization(options =>
             {

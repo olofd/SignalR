@@ -1325,10 +1325,16 @@ namespace Microsoft.AspNetCore.SignalR.Tests
         [MemberData(nameof(StreamingMethodAndHubProtocols))]
         public async Task HubsCanStreamResponses(string method, IHubProtocol protocol)
         {
-            var serviceProvider = HubEndPointTestUtils.CreateServiceProvider();
+            var serviceProvider = HubEndPointTestUtils.CreateServiceProvider(services =>
+            {
+                services.AddSignalR()
+                .AddHubOptions<StreamingHub>(options =>
+                {
+                    options.SupportedProtocols.Add("messagepack");
+                });
+            });
 
             var endPoint = serviceProvider.GetService<HubEndPoint<StreamingHub>>();
-
             var invocationBinder = new Mock<IInvocationBinder>();
             invocationBinder.Setup(b => b.GetReturnType(It.IsAny<string>())).Returns(typeof(string));
 
@@ -1566,6 +1572,10 @@ namespace Microsoft.AspNetCore.SignalR.Tests
             var serviceProvider = HubEndPointTestUtils.CreateServiceProvider(services =>
             {
                 services.AddSignalR()
+                    .AddHubOptions<MethodHub>(options =>
+                    {
+                        options.SupportedProtocols.Add("messagepack");
+                    })
                     .AddMessagePackProtocol(options =>
                     {
                         options.SerializationContext.SerializationMethod = SerializationMethod.Array;

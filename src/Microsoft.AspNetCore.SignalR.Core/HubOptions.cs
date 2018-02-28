@@ -26,6 +26,6 @@ namespace Microsoft.AspNetCore.SignalR
         /// </remarks>
         public TimeSpan KeepAliveInterval { get; set; } = DefaultKeepAliveInterval;
 
-        public List<string> SupportedProtocols { get; set; } = new List<string> { DefaultProtocols.JSONProtocol, DefaultProtocols.MsgPackProtocol};
+        public List<string> SupportedProtocols { get; set; } = new List<string> { DefaultProtocols.JSONProtocol };
     }
 }
