@@ -1,7 +1,7 @@
 {
-  "name": "@aspnet/signalr",
+  "name": "olofd-signalr",
   "version": "1.0.0-rc1-t000",
-  "description": "ASP.NET Core SignalR Client",
+  "description": "A modified version of SignalR for React Native (Do not use)",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "typings": "./dist/esm/index.d.ts",
